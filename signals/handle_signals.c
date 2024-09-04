@@ -6,7 +6,7 @@
 /*   By: elel-bah <elel-bah@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/29 17:03:53 by elel-bah          #+#    #+#             */
-/*   Updated: 2024/09/02 18:19:28 by elel-bah         ###   ########.fr       */
+/*   Updated: 2024/09/04 10:54:57 by elel-bah         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
@@ -15,21 +15,45 @@
 void sig_int(int code)
 {
     (void)code;
-    if (g_sig.pid == 0)
+    if (g_sig.in_heredoc)
+    {
+        write(STDERR_FILENO, "\n", 1);
+        g_sig.sigint = 1;
+        g_sig.exit_status = 1;
+    }
+    else if (g_sig.pid == 0)
     {
         write(STDERR_FILENO, "\n", 1);
         rl_on_new_line();
         rl_replace_line("", 0);
         rl_redisplay();
+        g_sig.sigint = 1;
+        g_sig.exit_status = 1;
     }
     else
     {
         write(STDERR_FILENO, "\n", 1);
     }
-    g_sig.sigint = 1;
-    g_sig.exit_status = 1;
-    // g_sig.exit_status = 130;
 }
+
+// void sig_int(int code)
+// {
+//     (void)code;
+//     if (g_sig.pid == 0)
+//     {
+//         write(STDERR_FILENO, "\n", 1);
+//         rl_on_new_line();
+//         rl_replace_line("", 0);
+//         rl_redisplay();
+//     }
+//     else
+//     {
+//         write(STDERR_FILENO, "\n", 1);
+//     }
+//     g_sig.sigint = 1;
+//     g_sig.exit_status = 1;
+//     // g_sig.exit_status = 130;
+// }
 
 void sig_quit(int code)
 {

@@ -6,7 +6,7 @@
 /*   By: elel-bah <elel-bah@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/13 10:01:40 by sel-hasn          #+#    #+#             */
-/*   Updated: 2024/09/03 11:04:15 by elel-bah         ###   ########.fr       */
+/*   Updated: 2024/09/04 15:03:01 by elel-bah         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
@@ -109,9 +109,17 @@ int	ft_exit_update(char **var, int i, char *exit_str, char *secend_part)
 	return (0);
 }
 
-int ft_handle_dolar(char **var, int i)
+int ft_handle_dolar(char **var, int *i)
 {
-	var[0] = ft_remove_char(var[0], i);
+	char qout;
+
+	qout = var[0][*i + 1];
+	if ((*i != 0) && (var[0][*i - 1] == qout))
+	{
+		*i += 1;
+		return (0);
+	}
+	var[0] = ft_remove_char(var[0], *i);
 	if (!var[0])
 	{
 		ft_putstr_fd("minishell : mlloc error\n", 2);
@@ -124,7 +132,6 @@ int	ft_expand_exit_status(char **var, int exit_status, int i)
 {
 	char	*exit_str;
 
-	exit_str = NULL;
 	while (var[0][i] != '\0')
 	{
 		if (var[0][i] == '\'')
@@ -140,7 +147,7 @@ int	ft_expand_exit_status(char **var, int exit_status, int i)
 		else if (var[0][i] == '$' && (var[0][i + 1] == '"'
 			|| var[0][i + 1] == '\''))
 		{
-			if (ft_handle_dolar(var, i) == -1)
+			if (ft_handle_dolar(var, &i) == -1)
 				return (-1);
 		}
 		else

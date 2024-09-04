@@ -6,7 +6,7 @@
 /*   By: elel-bah <elel-bah@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/29 16:56:34 by elel-bah          #+#    #+#             */
-/*   Updated: 2024/08/31 17:59:33 by elel-bah         ###   ########.fr       */
+/*   Updated: 2024/09/04 10:54:42 by elel-bah         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
@@ -80,6 +80,7 @@ typedef struct s_sig
 	int		sigquit;
 	int		exit_status;
 	pid_t	pid;
+	int in_heredoc;///
 }	t_sig;
 
 t_sig	g_sig;

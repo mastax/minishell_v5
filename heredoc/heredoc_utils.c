@@ -6,7 +6,7 @@
 /*   By: elel-bah <elel-bah@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/28 21:17:09 by elel-bah          #+#    #+#             */
-/*   Updated: 2024/09/03 18:30:47 by elel-bah         ###   ########.fr       */
+/*   Updated: 2024/09/04 11:55:00 by elel-bah         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
@@ -36,14 +36,6 @@ static char *append_buffer(char *line, char *buffer, int bytes_read, int *total_
     return new_line;
 }
 
-static int read_line_interrupted = 0;
-
-static void read_line_signal_handler(int sig)
-{
-    (void)sig;
-    read_line_interrupted = 1;
-}
-
 char *read_line(void)
 {
     char *line = NULL;
@@ -51,13 +43,12 @@ char *read_line(void)
     int bytes_read;
     int total_size = 0;
 
-    signal(SIGINT, read_line_signal_handler);
-
     while ((bytes_read = read(STDIN_FILENO, buffer, BUFFER_SIZE)) > 0) {
-        if (read_line_interrupted) {
-            free(line);
-            return NULL;
-        }
+        // if (read_line_interrupted)
+        // {
+        //     free(line);
+        //     return NULL;
+        // }
 
         line = append_buffer(line, buffer, bytes_read, &total_size);
         if (!line)

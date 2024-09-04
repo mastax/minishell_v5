@@ -236,7 +236,7 @@ void close_all_fds(t_fd_tracker *tracker);
 /*heredoc helpers*/
 
 void child_process(int pipefd[2], const char *delimiter, t_env *env, t_fd_tracker *fd_tracker);
-void parent_process(int pipefd[2], pid_t pid, t_fd_tracker *fd_tracker);
+int parent_process(int pipefd[2], pid_t pid, t_fd_tracker *fd_tracker);
 int check_if_qoutes(char *s);
 
 #endif

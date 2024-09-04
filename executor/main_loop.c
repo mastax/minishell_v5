@@ -6,7 +6,7 @@
 /*   By: elel-bah <elel-bah@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/29 16:56:01 by elel-bah          #+#    #+#             */
-/*   Updated: 2024/09/03 10:54:41 by elel-bah         ###   ########.fr       */
+/*   Updated: 2024/09/04 14:32:05 by elel-bah         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
@@ -158,16 +158,16 @@ int main_shell_loop(t_env *env, t_fd_tracker *fd_tracker)
     while (1)
     {
         initialize_loop_iteration(&tokens);
+        if (g_sig.sigint)
+        {
+            g_sig.sigint = 0;
+            exit_status = g_sig.exit_status;
+        }
         input = readline(GREEN"minishell> "RESET);
         if (input == NULL)
         {
             write(STDERR_FILENO, "exit\n", 6);
             break;
-        }
-        if (g_sig.sigint)
-        {
-            exit_status = g_sig.exit_status;
-            g_sig.sigint = 0;
         }
         if (process_input(input, env, &tokens, &exit_status) == -1)
         {
@@ -179,6 +179,38 @@ int main_shell_loop(t_env *env, t_fd_tracker *fd_tracker)
     close_all_fds(fd_tracker);
     return (exit_status);
 }
+
+// int main_shell_loop(t_env *env, t_fd_tracker *fd_tracker)
+// {
+//     char *input;
+//     t_token *tokens;
+//     int exit_status = 0;
+
+//     sig_init();
+//     while (1)
+//     {
+//         initialize_loop_iteration(&tokens);
+//         input = readline(GREEN"minishell> "RESET);
+//         if (input == NULL)
+//         {
+//             write(STDERR_FILENO, "exit\n", 6);
+//             break;
+//         }
+//         if (g_sig.sigint)
+//         {
+//             exit_status = g_sig.exit_status;
+//             g_sig.sigint = 0;
+//         }
+//         if (process_input(input, env, &tokens, &exit_status) == -1)
+//         {
+//             close_all_fds(fd_tracker);
+//             // return (exit_status);
+//         }
+//         close_all_fds(fd_tracker);
+//     }
+//     close_all_fds(fd_tracker);
+//     return (exit_status);
+// }
 
 //=-=-=-=-=-=-=-
 // int main_shell_loop(t_env *env, t_fd_tracker *fd_tracker)
