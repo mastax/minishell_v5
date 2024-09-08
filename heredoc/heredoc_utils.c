@@ -6,66 +6,11 @@
 /*   By: elel-bah <elel-bah@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/28 21:17:09 by elel-bah          #+#    #+#             */
-/*   Updated: 2024/09/04 11:55:00 by elel-bah         ###   ########.fr       */
+/*   Updated: 2024/09/08 16:08:09 by elel-bah         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
 #include "../mini_shell.h"
-
-#define BUFFER_SIZE 1024
-
-static char *append_buffer(char *line, char *buffer, int bytes_read, int *total_size)
-{
-    char *new_line;
-    int new_size = *total_size + bytes_read + 1;
-
-    new_line = malloc(new_size);
-    if (!new_line)
-    {
-        free(line);
-        return NULL;
-    }
-    if (line)
-    {
-        ft_memcpy(new_line, line, *total_size);
-        free(line);
-    }
-    ft_memcpy(new_line + *total_size, buffer, bytes_read);
-    *total_size = new_size - 1;
-    new_line[*total_size] = '\0';
-    return new_line;
-}
-
-char *read_line(void)
-{
-    char *line = NULL;
-    char buffer[BUFFER_SIZE];
-    int bytes_read;
-    int total_size = 0;
-
-    while ((bytes_read = read(STDIN_FILENO, buffer, BUFFER_SIZE)) > 0) {
-        // if (read_line_interrupted)
-        // {
-        //     free(line);
-        //     return NULL;
-        // }
-
-        line = append_buffer(line, buffer, bytes_read, &total_size);
-        if (!line)
-            return NULL;
-        if (line[total_size - 1] == '\n') {
-            line[total_size - 1] = '\0';
-            return line;
-        }
-    }
-
-    if (bytes_read == -1 || (bytes_read == 0 && total_size == 0)) {
-        free(line);
-        return NULL;
-    }
-
-    return line;
-}
 
 int	ft_expand_herdoc_var(char **var, t_env *env, t_type prv_type, int i)
 {

@@ -6,7 +6,7 @@
 /*   By: elel-bah <elel-bah@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/28 20:59:26 by elel-bah          #+#    #+#             */
-/*   Updated: 2024/09/04 14:35:23 by elel-bah         ###   ########.fr       */
+/*   Updated: 2024/09/08 16:08:25 by elel-bah         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
@@ -21,7 +21,7 @@ static char *get_heredoc_delimiter(char **red, int index)
         if (ft_strcmp(red[i], "<<") == 0)
         {
             if (count == index && red[i + 1])
-                return ft_strdup(red[i + 1]);
+                return (ft_strdup(red[i + 1]));
             count++;
         }
         i++;
@@ -55,40 +55,6 @@ int process_delimiter(char **red, int i, char **delimiter, char **processed_deli
         *processed_delimiter = *delimiter;
     return *processed_delimiter != NULL;
 }
-int create_heredoc(const char *delimiter, t_env *env, t_fd_tracker *tracker)
-{
-    int pipefd[2];
-    pid_t pid;
-
-    if (pipe(pipefd) == -1)
-    {
-        perror("pipe");
-        return -1;
-    }
-    track_fd(tracker, pipefd[0]);
-    track_fd(tracker, pipefd[1]);
-    g_sig.in_heredoc = 1;/////
-    pid = fork();
-    if (pid == -1) {
-        perror("fork");
-        close(pipefd[0]);
-        close(pipefd[1]);
-        untrack_fd(tracker, pipefd[0]);
-        untrack_fd(tracker, pipefd[1]);
-        g_sig.in_heredoc = 0;  // Reset the flag
-        return -1;
-    }
-    if (pid == 0) { // Child process
-        signal(SIGINT, SIG_DFL);
-        child_process(pipefd, delimiter, env, tracker);
-        exit(0);
-    } else { // Parent process
-        parent_process(pipefd, pid, tracker);
-        g_sig.in_heredoc = 0;  // Reset the flag
-        untrack_fd(tracker, pipefd[1]); // Untrack the write end that we closed
-        return pipefd[0];
-    }
-} 
 
 void cleanup_and_return(int *heredoc_fds, int count, t_fd_tracker *tracker)
 {

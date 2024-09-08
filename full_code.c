@@ -588,6 +588,7 @@ int set_env_value(t_env *env, const char *key, const char *value)
     // If the variable does not exist, add it as a new environment variable
     return (add_new_env(env, new_var));
 }
+//=-=-=-=-=-=-=-=-=-=--=-==-
 //REDIRECTION
 //=-=-=-=-=-=-=-=-=-=-=--=-=
 
@@ -704,4 +705,362 @@ int apply_redirections(char **red)
     
     // Return 0 to indicate all redirections were successfully applied
     return 0;
+}
+
+//=-=-=-=-=-=-=-=-=-=--=-==-
+//HEREDOC
+//=-=-=-=-=-=-=-=-=-=-=--=-=
+
+// Get the delimiter for the nth heredoc in the redirection array
+static char *get_heredoc_delimiter(char **red, int index)
+{
+    int count = 0; // Keeps track of how many heredocs (<<) we've found
+    int i = 0;     // Index to iterate through the red array
+
+    // Loop through the redirection array until the end
+    while (red && red[i])
+    {
+        // If we find the heredoc operator (<<)
+        if (ft_strcmp(red[i], "<<") == 0)
+        {
+            // If it's the nth heredoc we're looking for and the next element is not NULL
+            if (count == index && red[i + 1])
+                return (ft_strdup(red[i + 1])); // Return a duplicate of the delimiter
+            count++; // Increment the count of heredocs found
+        }
+        i++; // Move to the next element in the array
+    }
+    return NULL; // Return NULL if no delimiter is found
+}
+
+// Process the delimiter for a heredoc, removing special characters and quotes if necessary
+int process_delimiter(char **red, int i, char **delimiter, char **processed_delimiter, t_fd_tracker *tracker)
+{
+    int j;
+
+    j = 0;
+    // Get the ith heredoc delimiter from the redirection array
+    *delimiter = get_heredoc_delimiter(red, i);
+    if (!*delimiter) // If no delimiter is found, return 0 (failure)
+        return 0;
+
+    // Loop through the characters in the delimiter
+    while (delimiter[0][j])
+    {
+        // If we find a dollar sign followed by either a double quote or single quote
+        if (delimiter[0][j] == '$' && (delimiter[0][j + 1] == '"'
+			|| delimiter[0][j + 1] == '\''))
+		{
+            // Remove the dollar sign from the delimiter
+            delimiter[0] = ft_remove_char(delimiter[0], j);
+            if (!delimiter[0]) // If removal failed, return 0 (failure)
+                return (0);
+        }
+        j++; // Move to the next character in the delimiter
+    }
+
+    // Check if the delimiter has quotes around it (single or double)
+    tracker->qout = check_if_qoutes(*delimiter);
+
+    // If quotes are found, remove them
+    if (tracker->qout == 1)
+        *processed_delimiter = ft_remove_quotes(*delimiter);
+    else
+        *processed_delimiter = *delimiter; // If no quotes, the delimiter remains unchanged
+
+    // Return 1 if the processed delimiter is not NULL (success)
+    return *processed_delimiter != NULL;
+}
+
+// Setup a pipe for process communication
+int setup_pipe(int pipefd[2], t_fd_tracker *tracker)
+{
+    // Create a pipe with two file descriptors (pipefd[0] for reading, pipefd[1] for writing)
+    if (pipe(pipefd) == -1)
+    {
+        perror("pipe"); // Print an error if pipe creation fails
+        return -1; // Return -1 to indicate failure
+    }
+
+    // Track the file descriptors (for proper closing and memory management)
+    track_fd(tracker, pipefd[0]);
+    track_fd(tracker, pipefd[1]);
+    return 0; // Return 0 on success
+}
+
+// Handle an error during fork, cleaning up pipe file descriptors
+int handle_fork_error(int pipefd[2], t_fd_tracker *tracker)
+{
+    perror("fork"); // Print an error message for fork failure
+    close(pipefd[0]); // Close the reading end of the pipe
+    close(pipefd[1]); // Close the writing end of the pipe
+    untrack_fd(tracker, pipefd[0]); // Untrack the reading end of the pipe
+    untrack_fd(tracker, pipefd[1]); // Untrack the writing end of the pipe
+    get_in_heredoc(0);  // Reset the heredoc flag (indicating heredoc process has ended)
+    return -1; // Return -1 to indicate failure
+}
+
+// Create the heredoc by forking a child process to handle input
+int create_heredoc(const char *delimiter, t_env *env, t_fd_tracker *tracker)
+{
+    int pipefd[2]; // File descriptors for the pipe
+    pid_t pid;     // Process ID for fork
+
+    // Setup a pipe for communication between processes
+    if (setup_pipe(pipefd, tracker) == -1)
+        return -1; // If pipe creation fails, return -1
+
+    get_in_heredoc(1); // Set heredoc flag to indicate we're in a heredoc
+
+    pid = fork(); // Create a new process (child process) with fork
+    if (pid == -1) // If fork fails
+        return handle_fork_error(pipefd, tracker); // Handle fork error
+
+    if (pid == 0) // Child process
+    {
+        signal(SIGINT, SIG_DFL); // Set signal handler for Ctrl-C to default behavior
+        child_process(pipefd, delimiter, env, tracker); // Handle heredoc input in the child process
+        exit(0); // Exit the child process when done
+    }
+
+    // Parent process waits for the child to finish
+    parent_process(pipefd, pid, tracker);
+
+    get_in_heredoc(0);  // Reset heredoc flag (indicating heredoc process has ended)
+    untrack_fd(tracker, pipefd[1]); // Close and untrack the writing end of the pipe
+    return pipefd[0]; // Return the reading end of the pipe (where heredoc data can be read)
+}
+
+// Cleanup file descriptors and free memory if an error occurs
+void cleanup_and_return(int *heredoc_fds, int count, t_fd_tracker *tracker)
+{
+    int j;
+
+    j = 0;
+    // Loop through each file descriptor and close it
+    while (j < count)
+    {
+        close(heredoc_fds[j]); // Close the heredoc file descriptor
+        untrack_fd(tracker, heredoc_fds[j]); // Untrack it from the file descriptor tracker
+        j++;
+    }
+    free(heredoc_fds); // Free the memory allocated for heredoc file descriptors
+}
+
+// Handle multiple heredocs, creating a pipe for each one
+int *handle_heredocs(char **red, int count, t_env *env, t_fd_tracker *tracker)
+{
+    int     *heredoc_fds; // Array of file descriptors for the heredocs
+    char    *delimiter;   // The delimiter for the current heredoc
+    char    *processed_delimiter; // Processed delimiter with special characters removed
+    int     i;
+
+    // Allocate memory to store the file descriptors for each heredoc
+    heredoc_fds = malloc(sizeof(int) * count);
+    if (!heredoc_fds) // If memory allocation fails, return NULL
+        return NULL;
+
+    i = 0;
+    // Loop through each heredoc to process and create it
+    while (i < count)
+    {
+        // Process the delimiter for the ith heredoc
+        if (!process_delimiter(red, i, &delimiter, &processed_delimiter, tracker))
+            return(cleanup_and_return(heredoc_fds, i, tracker), NULL); // Cleanup and return NULL if processing fails
+
+        // Create the heredoc with the processed delimiter
+        heredoc_fds[i] = create_heredoc(processed_delimiter, env, tracker);
+
+        free(processed_delimiter); // Free the memory for the processed delimiter
+
+        // If heredoc creation fails, cleanup and return NULL
+        if (heredoc_fds[i] == -1)
+            return (cleanup_and_return(heredoc_fds, i, tracker), NULL);
+
+        i++; // Move to the next heredoc
+    }
+    return heredoc_fds; // Return the array of heredoc file descriptors
+}
+
+//==-=-=-=-=-=-=-=-
+
+//heredoc helpers
+
+//=-=-=-=-=-=-=-=-=-
+
+// Appends a buffer to an existing line, resizing the line dynamically as needed.
+static char *append_buffer(char *line, char *buffer, int bytes_read, int *total_size)
+{
+    char *new_line;
+    int new_size = *total_size + bytes_read + 1;  // Calculate new size including null terminator
+
+    new_line = malloc(new_size);  // Allocate memory for the new string
+    if (!new_line)  // Check if malloc failed
+    {
+        free(line);  // Free the existing line to avoid memory leaks
+        return NULL;  // Return NULL if memory allocation failed
+    }
+    if (line)  // If there was an existing line
+    {
+        ft_memcpy(new_line, line, *total_size);  // Copy old line data to new buffer
+        free(line);  // Free the old line
+    }
+    ft_memcpy(new_line + *total_size, buffer, bytes_read);  // Append the buffer data to the new line
+    *total_size = new_size - 1;  // Update the total size, excluding the null terminator
+    new_line[*total_size] = '\0';  // Ensure the new line is null-terminated
+    return new_line;  // Return the updated line
+}
+
+// Reads input from standard input (keyboard) and returns a single line.
+char *read_line(void)
+{
+    char *line = NULL;  // Initialize an empty line
+    char buffer[BUFFER_SIZE];  // Buffer to store chunks of input
+    int bytes_read;
+    int total_size = 0;  // Track total size of the line being built
+
+    while ((bytes_read = read(STDIN_FILENO, buffer, BUFFER_SIZE)) > 0)  // Read from stdin in chunks
+    {
+        line = append_buffer(line, buffer, bytes_read, &total_size);  // Append each chunk to the line
+        if (!line)  // Check if appending failed
+            return NULL;
+        if (line[total_size - 1] == '\n')  // Stop if a newline is encountered
+        {
+            line[total_size - 1] = '\0';  // Replace newline with null terminator
+            return line;  // Return the complete line
+        }
+    }
+
+    // Handle errors or empty input
+    if (bytes_read == -1 || (bytes_read == 0 && total_size == 0))
+    {
+        free(line);  // Free any allocated memory
+        return NULL;  // Return NULL if there was an error or no input
+    }
+    return line;  // Return the final line
+}
+
+// Expands a variable inside heredoc content, replacing $VARIABLE with its value from the environment.
+int	ft_expand_herdoc_var(char **var, t_env *env, t_type prv_type, int i)
+{
+	int		j;
+	char	*var_name;
+
+	while (var[0][i] != '\0')  // Iterate through the string until the end
+	{
+		if (var[0][i] == '\'')  // Skip single-quoted sections (variables aren't expanded inside them)
+			i = ft_skipe_qoute(*var, i);
+		else if (var[0][i] == '$' && (is_valid_var(var[0][i + 1]) == 1))  // Check if '$' is followed by a valid variable
+		{
+			j = ft_name_len(*var, i + 1);  // Get the length of the variable name
+			var_name = ft_substr(*var, i + 1, j);  // Extract the variable name from the string
+			if (!var_name)  // Check if extraction failed
+				return (-1);
+			if (prv_type == WORD)  // If this is a regular word (not quoted)
+				if (ft_var_update(i, var, get_var_from_env(var_name, j, env),
+						&var[0][i + j + 1]) == -1)  // Replace the variable with its value
+					return (-1);  // Return error if variable expansion fails
+		}
+		else if ((var[0][i] == '$' && (is_valid_var(var[0][i + 1]) != 1))
+			|| (var[0][i] != '$' && var[0][i] != '\0'))  // Continue if '$' is not followed by a valid variable
+			i++;
+	}
+	return (0);  // Return success
+}
+
+// Expands all variables in a heredoc line.
+int expand_variable(char **line, t_env *env)
+{
+    char *expanded_line;
+
+    expanded_line = ft_strdup(*line);  // Create a copy of the original line
+    if (expanded_line == NULL)  // Check if strdup failed
+    {
+        perror("ft_strdup");  // Print error
+        free(*line);  // Free the original line
+        return -1;  // Return error
+    }
+    if (ft_expand_herdoc_var(&expanded_line, env, WORD, 0) == -1)  // Expand variables in the line
+    {
+        free(expanded_line);  // Free the expanded line if expansion failed
+        free(*line);  // Free the original line
+        return -1;  // Return error
+    }
+
+    free(*line);  // Free the original line
+    *line = expanded_line;  // Replace original line with expanded one
+    return 0;  // Return success
+}
+
+// Writes a line to a pipe.
+int write_to_pipe(int pipefd[2], char *line)
+{
+    write(pipefd[1], line, ft_strlen(line));  // Write the line to the pipe's write end
+    write(pipefd[1], "\n", 1);  // Write a newline after the line
+    return 0;  // Return success
+}
+
+// Counts the number of heredoc delimiters ("<<") in the redirection array.
+int count_heredocs(char **red)
+{
+    int count;
+    int i;
+
+    count = 0;
+    i = 0;
+    if (!red || !(*red))  // Check if the redirection array is empty
+        return (0);
+    while (red[i] != NULL)  // Loop through the redirection array
+    {
+        if (ft_strcmp(red[i], "<<") == 0)  // Count occurrences of "<<"
+            count++;
+        i++;
+    }
+    return count;  // Return the total count of heredocs
+}
+
+// Child process for handling heredoc input.
+void child_process(int pipefd[2], const char *delimiter, t_env *env, t_fd_tracker *fd_tracker)
+{
+    char *line;
+
+    close(pipefd[0]);  // Close the read end of the pipe
+    untrack_fd(fd_tracker, pipefd[0]);  // Untrack the file descriptor
+    while ((line = read_line()) != NULL)  // Read input lines from stdin
+    {
+        if (ft_strcmp(line, delimiter) == 0)  // Stop if the line matches the heredoc delimiter
+            break;
+        if (fd_tracker->qout == 0)  // If no quotes are found around the delimiter, expand variables
+            if (expand_variable(&line, env) == -1)  // Exit on expansion failure
+                exit(1);
+        write_to_pipe(pipefd, line);  // Write the line to the pipe
+        free(line);  // Free the line after writing
+    }
+    close(pipefd[1]);  // Close the write end of the pipe after reading all lines
+    untrack_fd(fd_tracker, pipefd[1]);  // Untrack the file descriptor
+}
+
+// Parent process for handling heredoc input.
+void parent_process(int pipefd[2], pid_t pid, t_fd_tracker *fd_tracker)
+{
+    (void)pid;  // We don’t use the pid here, so it is cast to void to avoid compiler warnings
+    int status;
+    close(pipefd[1]);  // Close the write end of the pipe
+    untrack_fd(fd_tracker, pipefd[1]);  // Untrack the file descriptor
+    waitpid(pid, &status, 0);  // Wait for the child process to finish
+}
+
+// Checks if a string contains single or double quotes.
+int check_if_qoutes(char *s)
+{
+    int i;
+
+    i = 0;
+    while (s[i])  // Iterate through the string
+    {
+        if (s[i] == '"' || s[i] == '\'')  // Return 1 if a single or double quote is found
+            return (1);
+        i++;
+    }
+    return (0);  // Return 0 if no quotes are found
 }

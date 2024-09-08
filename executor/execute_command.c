@@ -6,7 +6,7 @@
 /*   By: elel-bah <elel-bah@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/29 16:55:48 by elel-bah          #+#    #+#             */
-/*   Updated: 2024/09/04 15:38:04 by elel-bah         ###   ########.fr       */
+/*   Updated: 2024/09/07 13:27:47 by elel-bah         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
@@ -227,7 +227,7 @@ static int process_commands(t_command_context1 *ctx, pid_t *pids)
         else
             child_count += handle_parent_process(ctx, current_cmd, pids, cmd_index);
 
-        g_sig.pid = pids[cmd_index];
+        get_pid(pids[cmd_index]);
         current_cmd = current_cmd->next;
         cmd_index++;
     }

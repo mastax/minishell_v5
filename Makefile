@@ -40,6 +40,7 @@ SRC = builtin/cd.c \
       parsing/expand_exit_status.c\
       parsing/arg_utils.c \
       heredoc/heredoc.c \
+      heredoc/create_heredoc.c \
       heredoc/heredoc_utils.c \
       heredoc/heredoc_utils1.c \
       signals/handle_signals.c \
@@ -70,5 +71,3 @@ fclean: clean
 re: fclean all
 
 .PHONY: all clean fclean re
-
-

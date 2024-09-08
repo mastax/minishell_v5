@@ -6,7 +6,7 @@
 /*   By: elel-bah <elel-bah@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/29 16:55:17 by elel-bah          #+#    #+#             */
-/*   Updated: 2024/09/01 11:35:55 by elel-bah         ###   ########.fr       */
+/*   Updated: 2024/09/07 13:27:24 by elel-bah         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
@@ -70,7 +70,7 @@ int ft_exit(char **av, int *exit_status)
     if (av[2])
     {
         ft_putstr_fd("exit: too many arguments\n", 2);
-        *exit_status = 1;
+        get_exit_status(1);
         return (1);
     }
     exit((int)(exit_code & 255));

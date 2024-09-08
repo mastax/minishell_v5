@@ -19,7 +19,6 @@ typedef struct s_fd_tracker {
 # include <readline/history.h>
 # include <sys/stat.h>
 
-
 #define MAX_PIPES 100
 #define MAX_COMMANDS 101
 #define MAX_ARGS 100
@@ -228,6 +227,11 @@ int	ft_expand_exit_status(char **var, int exit_status, int i);
 void sig_int(int code);
 void sig_init(void);
 void sig_quit(int code);
+int get_sigint(int n);
+int get_sigquit(int n);
+int get_pid(int n);
+int get_exit_status(int n);
+int get_in_heredoc(int n);
 
 void track_fd(t_fd_tracker *tracker, int fd);
 void untrack_fd(t_fd_tracker *tracker, int fd);
@@ -235,8 +239,9 @@ void close_all_fds(t_fd_tracker *tracker);
 
 /*heredoc helpers*/
 
+int create_heredoc(const char *delimiter, t_env *env, t_fd_tracker *tracker);
 void child_process(int pipefd[2], const char *delimiter, t_env *env, t_fd_tracker *fd_tracker);
-int parent_process(int pipefd[2], pid_t pid, t_fd_tracker *fd_tracker);
+void parent_process(int pipefd[2], pid_t pid, t_fd_tracker *fd_tracker);
 int check_if_qoutes(char *s);
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: elel-bah <elel-bah@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/29 10:51:50 by elel-bah          #+#    #+#             */
-/*   Updated: 2024/09/01 11:38:25 by elel-bah         ###   ########.fr       */
+/*   Updated: 2024/09/07 13:28:02 by elel-bah         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
@@ -115,7 +115,7 @@ int ft_exports(t_env *env, char **args, int *exit_status)
 		if (command_return == 0)
 			return (0);
 		else if (command_return == 2)
-			*exit_status = 1;
+			get_exit_status(1);
 		i++;
 	}
 	return (1);

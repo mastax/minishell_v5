@@ -6,7 +6,7 @@
 /*   By: elel-bah <elel-bah@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/27 19:14:15 by elel-bah          #+#    #+#             */
-/*   Updated: 2024/09/01 10:34:12 by elel-bah         ###   ########.fr       */
+/*   Updated: 2024/09/07 13:27:18 by elel-bah         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
@@ -34,7 +34,7 @@ int ft_change_dir(char **av, t_env *env, int *exit_status)
     if (*exit_status == -1)
     {
         perror("cd");
-        *exit_status = 1;
+        get_exit_status(1);
         return (1);
     }
     if  (getcwd(new_dir, sizeof(new_dir)) == NULL)

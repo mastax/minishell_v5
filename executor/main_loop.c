@@ -6,7 +6,7 @@
 /*   By: elel-bah <elel-bah@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/29 16:56:01 by elel-bah          #+#    #+#             */
-/*   Updated: 2024/09/04 14:32:05 by elel-bah         ###   ########.fr       */
+/*   Updated: 2024/09/07 13:27:55 by elel-bah         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
@@ -50,10 +50,11 @@ static int handle_input(char *input, t_env *env)
     return (0);
 }
 
-static int process_command(t_token *tokens, t_env *env, int *exit_status)
+static int process_command(t_token *tokens, t_env *env)
 {
     t_arg *cmd;
     int result;
+	int exit_status = get_exit_status(-500);
     t_fd_tracker fd_tracker = {0};
 
     if (!tokens)
@@ -66,13 +67,12 @@ static int process_command(t_token *tokens, t_env *env, int *exit_status)
         t_command_context context;
         context.cmd = cmd;
         context.env = env;
-        context.exit_status = exit_status;
+        context.exit_status = &exit_status;
         context.fd_tracker = &fd_tracker;
 
         result = execute_command(&context);
-        // result = execute_command(cmd, env, exit_status, &fd_tracker);
         free_command(cmd);
-        return result;  // Return the result from execute_command
+        return result;
     }
     free_command(cmd);
     return (0);
@@ -108,22 +108,22 @@ int handle_parse_result(int parse_result, t_token **tokens, int *exit_status)
     if (parse_result == -1)
     {
         free_tokens(*tokens);
-        g_sig.exit_status = 1;
+        get_exit_status(1);
     }
     else if (parse_result == 258)
     {
         free_tokens(*tokens);
-        g_sig.exit_status = 258;
+        get_exit_status(258);
     }
-    *exit_status = g_sig.exit_status;
+    *exit_status = get_exit_status(-500);
     return (parse_result);
 }
 
 void initialize_loop_iteration(t_token **tokens)
 {
     *tokens = NULL;
-    g_sig.pid = 0;
-    g_sig.sigint = 0;
+    get_pid(0);
+    get_sigint(0);
     signal(SIGINT, sig_int);
     signal(SIGQUIT, sig_quit);
 }
@@ -137,7 +137,7 @@ int process_input(char *input, t_env *env, t_token **tokens, int *exit_status)
     parse_result = parsing(input, tokens, env, *exit_status);
     if (parse_result == 0)
     {
-        if (process_command(*tokens, env, &g_sig.exit_status) == -1)
+        if (process_command(*tokens, env) == -1)
         {
             free_tokens(*tokens);
             return (-1);
@@ -158,10 +158,10 @@ int main_shell_loop(t_env *env, t_fd_tracker *fd_tracker)
     while (1)
     {
         initialize_loop_iteration(&tokens);
-        if (g_sig.sigint)
+        if (get_sigint(-500))
         {
-            g_sig.sigint = 0;
-            exit_status = g_sig.exit_status;
+            get_sigint(0);
+            exit_status = get_exit_status(-500);
         }
         input = readline(GREEN"minishell> "RESET);
         if (input == NULL)
@@ -179,94 +179,3 @@ int main_shell_loop(t_env *env, t_fd_tracker *fd_tracker)
     close_all_fds(fd_tracker);
     return (exit_status);
 }
-
-// int main_shell_loop(t_env *env, t_fd_tracker *fd_tracker)
-// {
-//     char *input;
-//     t_token *tokens;
-//     int exit_status = 0;
-
-//     sig_init();
-//     while (1)
-//     {
-//         initialize_loop_iteration(&tokens);
-//         input = readline(GREEN"minishell> "RESET);
-//         if (input == NULL)
-//         {
-//             write(STDERR_FILENO, "exit\n", 6);
-//             break;
-//         }
-//         if (g_sig.sigint)
-//         {
-//             exit_status = g_sig.exit_status;
-//             g_sig.sigint = 0;
-//         }
-//         if (process_input(input, env, &tokens, &exit_status) == -1)
-//         {
-//             close_all_fds(fd_tracker);
-//             // return (exit_status);
-//         }
-//         close_all_fds(fd_tracker);
-//     }
-//     close_all_fds(fd_tracker);
-//     return (exit_status);
-// }
-
-//=-=-=-=-=-=-=-
-// int main_shell_loop(t_env *env, t_fd_tracker *fd_tracker)
-// {
-//     char *input;
-//     t_token *tokens;
-//     int exit_status;
-//     int parse_result;
-
-//     exit_status = 0;
-//     sig_init();
-//     while (1)
-//     {
-//         tokens = NULL;
-//         g_sig.pid = 0;  // Reset pid before each command
-//         g_sig.sigint = 0;  // Reset sigint flag
-//         signal(SIGINT, sig_int);
-//         signal(SIGQUIT, sig_quit);
-//         input = readline(GREEN"minishell> "RESET);
-//         if (input == NULL)
-//         {
-//             write(STDERR_FILENO, "exit\n", 6);
-//             break;
-//         }
-//         if (g_sig.sigint)//for ctrl-c than echo $?
-//         {
-//             exit_status = g_sig.exit_status;
-//             g_sig.sigint = 0;  // Reset the flag
-//         }
-//         if (handle_input(input, env))
-//             return (exit_status);
-//         parse_result = parsing(input, &tokens, env, exit_status);
-//         if (parse_result == 0)
-//         {
-//             if (process_command(tokens, env, &g_sig.exit_status) == -1)
-//             {
-//                 free_tokens(tokens);
-//                 close_all_fds(fd_tracker);
-//                 return (exit_status);
-//             }
-//             free_tokens(tokens);
-//             tokens = NULL;
-//         }
-//         else if (parse_result == -1)
-//         {
-//             free_tokens(tokens);
-//             g_sig.exit_status = 1;
-//         }
-//         else if (parse_result == 258)
-//         {
-//             free_tokens(tokens);
-//             g_sig.exit_status = 258;
-//         }
-//         exit_status = g_sig.exit_status;
-//         close_all_fds(fd_tracker);
-//     }
-//     close_all_fds(fd_tracker);
-//     return (exit_status);
-// }
