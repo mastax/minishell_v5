@@ -10,7 +10,9 @@ SRC = builtin/cd.c \
       builtin/builtin_executer.c \
       executor/cmd_executer_utils.c \
       executor/execute_command_utils.c \
-      executor/execute_command.c \
+      executor/execution_utils.c \
+      executor/execution.c \
+      executor/fd_leaks_tracker.c \
       executor/find_command.c \
       executor/main_loop.c \
       executor/create_env.c \
@@ -44,6 +46,7 @@ SRC = builtin/cd.c \
       heredoc/heredoc_utils.c \
       heredoc/heredoc_utils1.c \
       signals/handle_signals.c \
+      signals/handle_signals_utils.c \
 	  mini_shell.c
 OBJ = $(SRC:.c=.o)
 RM = rm -f

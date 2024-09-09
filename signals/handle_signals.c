@@ -6,7 +6,7 @@
 /*   By: elel-bah <elel-bah@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/29 17:03:53 by elel-bah          #+#    #+#             */
-/*   Updated: 2024/09/08 18:26:21 by elel-bah         ###   ########.fr       */
+/*   Updated: 2024/09/09 11:23:30 by elel-bah         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
@@ -54,47 +54,4 @@ void sig_init(void)
     get_sigquit(0);
     get_pid(0);
     get_exit_status(0);
-}
-
-int get_sigint(int n)
-{
-	static int  v;
-
-    v = 0;
-	if (n != -500)
-		v = n;
-	return (v);
-}
-int get_sigquit(int n)
-{
-	static int v = 0;
-	
-	if (n != -500)
-		v = n;
-	return (v);
-}
-int get_pid(int n)
-{
-	static int v = 0;
-	
-	if (n != -500)
-		v = n;
-	return (v);
-}
-int get_exit_status(int n)
-{
-	static int v = 0;
-	
-	if (n != -500)
-		v = n;
-	return (v);
-}
-int get_in_heredoc(int n)
-{
-	static int  v;
-
-    v = 0;
-	if (n != -500)
-		v = n;
-	return (v);
 }

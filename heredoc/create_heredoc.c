@@ -6,7 +6,7 @@
 /*   By: elel-bah <elel-bah@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/08 15:34:13 by elel-bah          #+#    #+#             */
-/*   Updated: 2024/09/08 16:08:41 by elel-bah         ###   ########.fr       */
+/*   Updated: 2024/09/09 20:40:04 by elel-bah         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
@@ -58,4 +58,17 @@ int create_heredoc(const char *delimiter, t_env *env, t_fd_tracker *tracker)
     get_in_heredoc(0);  // Reset the flag
     untrack_fd(tracker, pipefd[1]);
     return (pipefd[0]);
+}
+void cleanup_heredoc_fds(t_arg *cmd, t_fd_tracker *fd_tracker)
+{
+    t_arg *current_cmd;
+
+    current_cmd = cmd;
+    while (current_cmd)
+    {
+        if (current_cmd->heredoc_fds) {
+            cleanup_command_heredocs(current_cmd, fd_tracker);
+        }
+        current_cmd = current_cmd->next;
+    }
 }

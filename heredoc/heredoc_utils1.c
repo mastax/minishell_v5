@@ -6,7 +6,7 @@
 /*   By: elel-bah <elel-bah@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/28 21:16:39 by elel-bah          #+#    #+#             */
-/*   Updated: 2024/09/08 16:08:21 by elel-bah         ###   ########.fr       */
+/*   Updated: 2024/09/09 12:51:53 by elel-bah         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
@@ -14,9 +14,10 @@
 
 static char *append_buffer(char *line, char *buffer, int bytes_read, int *total_size)
 {
-    char *new_line;
-    int new_size = *total_size + bytes_read + 1;
+    char    *new_line;
+    int     new_size;
 
+    new_size = *total_size + bytes_read + 1;
     new_line = malloc(new_size);
     if (!new_line)
     {

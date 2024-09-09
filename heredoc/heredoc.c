@@ -6,11 +6,43 @@
 /*   By: elel-bah <elel-bah@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/28 20:59:26 by elel-bah          #+#    #+#             */
-/*   Updated: 2024/09/08 16:08:25 by elel-bah         ###   ########.fr       */
+/*   Updated: 2024/09/09 18:27:55 by elel-bah         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
 #include "../mini_shell.h"
+
+int setup_and_handle_heredocs(t_setup_context *ctx)//execution
+{
+    t_fd_tracker fd_tracker = {0};
+    t_arg *current_cmd;
+    int heredoc_count;
+
+    *(ctx->command_count) = count_commands(ctx->cmd);
+    *(ctx->pipe_count) = *(ctx->command_count) - 1;
+    save_original_io(ctx->io);
+    if (setup_pipes(*(ctx->pipe_count), ctx->pipe_fds, &fd_tracker) != 0)
+    {
+        restore_io(ctx->io);
+        return 1;
+    }
+    // Process all heredocs
+    current_cmd = ctx->cmd;
+    while (current_cmd) {
+        heredoc_count = count_heredocs(current_cmd->red);
+        if (heredoc_count > 0)
+        {
+            current_cmd->heredoc_fds = handle_heredocs(current_cmd->red, heredoc_count, ctx->env, &fd_tracker);
+            if (!current_cmd->heredoc_fds)
+            {
+                restore_io(ctx->io);
+                return 1;
+            }
+        }
+        current_cmd = current_cmd->next;
+    }
+    return 0;
+}
 
 static char *get_heredoc_delimiter(char **red, int index)
 {

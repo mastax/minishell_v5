@@ -6,7 +6,7 @@
 /*   By: elel-bah <elel-bah@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/29 16:56:25 by elel-bah          #+#    #+#             */
-/*   Updated: 2024/08/29 16:56:26 by elel-bah         ###   ########.fr       */
+/*   Updated: 2024/09/09 16:52:41 by elel-bah         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
@@ -65,5 +65,6 @@ typedef struct
     int (*pipe_fds)[2];
     t_io *io;
 } setup_execution_params;
+
 
 #endif 

@@ -1,14 +1,4 @@
-/******************************************************************************/
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   create_env.c                                       :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: elel-bah <elel-bah@student.1337.ma>        +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/08/24 15:24:05 by sel-hasn          #+#    #+#             */
-/*   Updated: 2024/08/31 13:09:58 by elel-bah         ###   ########.fr       */
-/*                                                                            */
-/******************************************************************************/
+//sel-hasn
 
 #include "../mini_shell.h"
 
@@ -55,48 +45,48 @@ int change_to_previous(t_env *env)
 	return (chdir(oldpwd));
 }
 
-t_env *allocate_env(int count)
-{
-	t_env *env;
+// t_env *allocate_env(int count)
+// {
+// 	t_env *env;
 
-	env = malloc(sizeof(t_env));
-	if (!env)
-		return (NULL);
-	env->env_vars = malloc(sizeof(char *) * (count + 1));
-	if (!env->env_vars)
-	{
-		free(env);
-		return (NULL);
-	}
-	env->count = count;
-	return (env);
-}
+// 	env = malloc(sizeof(t_env));
+// 	if (!env)
+// 		return (NULL);
+// 	env->env_vars = malloc(sizeof(char *) * (count + 1));
+// 	if (!env->env_vars)
+// 	{
+// 		free(env);
+// 		return (NULL);
+// 	}
+// 	env->count = count;
+// 	return (env);
+// }
 
-t_env *create_env(char **envp)
-{
-	t_env *env;
-	int count;
-	int i;
+// t_env *create_env(char **envp)
+// {
+// 	t_env *env;
+// 	int count;
+// 	int i;
 
-	count = 0;
-	while (envp[count])
-		count++;
-	if (count == 0)
-		return (create_env_v_i(5));
-	env = allocate_env(count);
-	if (!env)
-		return (NULL);
-	i = 0;
-	while (i < count && (env->env_vars[i] = ft_strdup(envp[i])))
-		i++;
-	if (i < count)
-	{
-		while (--i >= 0)
-			free(env->env_vars[i]);
-		free(env->env_vars);
-		free(env);
-		return (NULL);
-	}
-	env->env_vars[count] = NULL;
-	return (env);
-}
+// 	count = 0;
+// 	while (envp[count])
+// 		count++;
+// 	if (count == 0)
+// 		return (create_env_v_i(5));
+// 	env = allocate_env(count);
+// 	if (!env)
+// 		return (NULL);
+// 	i = 0;
+// 	while (i < count && (env->env_vars[i] = ft_strdup(envp[i])))
+// 		i++;
+// 	if (i < count)
+// 	{
+// 		while (--i >= 0)
+// 			free(env->env_vars[i]);
+// 		free(env->env_vars);
+// 		free(env);
+// 		return (NULL);
+// 	}
+// 	env->env_vars[count] = NULL;
+// 	return (env);
+// }
