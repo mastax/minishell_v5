@@ -6,35 +6,11 @@
 /*   By: elel-bah <elel-bah@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/29 16:56:05 by elel-bah          #+#    #+#             */
-/*   Updated: 2024/09/09 14:51:56 by elel-bah         ###   ########.fr       */
+/*   Updated: 2024/09/10 10:52:27 by elel-bah         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
 #include "../mini_shell.h"
-
-// void	free_command(t_arg *cmd)
-// {
-// 	t_arg *tmp;
-	
-// 	if (!cmd)
-// 		return ;
-
-// 	// Free arguments
-// 	while (cmd)
-// 	{
-// 		tmp = cmd->next;//if(cmd->arg != NULL)
-// 		for (int i = 0; cmd->arg && cmd->arg[i]; i++)
-// 			free(cmd->arg[i]);//if (cmd->srg[i] != NULL)free()
-// 		free(cmd->arg);
-// 		// Free redirections
-// 		for (int i = 0; cmd->red && cmd->red[i]; i++)
-// 			free(cmd->red[i]);
-// 		free(cmd->red);
-// 		// Free the command structure itself
-// 		free(cmd);
-// 		cmd = tmp;
-// 	}
-// }
 
 void	free_command(t_arg *cmd)
 {
